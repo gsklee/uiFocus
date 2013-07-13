@@ -1,0 +1,8 @@
+{
+    "name": "uifocus",
+    "version": "0.0.1",
+    "main": "./uiFocus.js",
+    "dependencies": {
+        "angular": "1.0.7"
+    }
+}
