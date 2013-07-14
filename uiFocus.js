@@ -1,71 +1,75 @@
-angular.module('uiFocus', []).
-      
-constant('keyNames', {
-    8: 'backspace',
-    9: 'tab',
-    13: 'enter',
-    27: 'esc',
-    32: 'space',
-    33: 'pageup',
-    34: 'pagedown',
-    35: 'end',
-    36: 'home',
-    37: 'left',
-    38: 'up',
-    39: 'right',
-    40: 'down',
-    45: 'insert',
-    46: 'delete'
-}).
-      
-directive('ui-focus', function(
-    $document,
-    keyNames
-){
-    return {
-        restrict: 'E',
-        link: function(scope, element, attr) {
-            var _boundingClientRect;
+'use strict';
 
-            scope.currentElement = document.querySelector('[ui-focus-init]');
-            _boundingClientRect = scope.currentElement.getBoundingClientRect();
+(function() {
+    angular.module('uiFocus', []).
+          
+    constant('keyNames', {
+        8: 'backspace',
+        9: 'tab',
+        13: 'enter',
+        27: 'esc',
+        32: 'space',
+        33: 'pageup',
+        34: 'pagedown',
+        35: 'end',
+        36: 'home',
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down',
+        45: 'insert',
+        46: 'delete'
+    }).
 
-            element.css({
-                display: 'block',
-                width: _boundingClientRect.width + 'px',
-                height: _boundingClientRect.height + 'px',
-                position: 'absolute',
-                top: _boundingClientRect.top + 'px',
-                left: _boundingClientRect.left +'px'
-            });
+    directive('uiFocusInit', function() {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attr) {
+                element.attr('tabindex', 0);
 
-            $document.bind('keydown', function(event) {
-                var keymap = scope.$eval(scope.currentElement.getAttribute('ui-focus-keymap'))
-                    _selector = keymap[event.keyCode] || keymap[keyNames[event.keyCode]],
-                    _$currentElement = angular.element(scope.currentElement),
-                    _$currentElementSiblings = _$currentElement.parent().children();
 
-                if (_selector) {
-                    scope.currentElement.removeAttribute('focus-init');
+                element[0].focus();
+            }
+        };
+    }).
 
-                    if ('++' === _selector) {
-                        scope.currentElement = _$currentElementSiblings[(_$currentElement.scope().$index + 1) % _$currentElementSiblings.length];
-                    } else if ('--' === _selector) {
-                        scope.currentElement = _$currentElementSiblings[(_$currentElement.scope().$index + _$currentElementSiblings.length - 1) % _$currentElementSiblings.length];
-                    } else {
-                        scope.currentElement = document.querySelector(_selector);
+    directive('uiFocusKeymap', function(
+        keyNames
+    ){
+        var _currentEvent;
+
+        return {
+            restrict: 'A',
+            link: function(scope, element, attr) {
+                var keymap = scope.$eval(attr.uiFocusKeymap);
+
+                element.attr('tabindex', 0);
+
+                element.bind('keydown', function(event) {
+                    var _rawNewElement,
+                        _boundingClientRect;
+
+                    event instanceof KeyboardEvent ? _currentEvent = event : void 0;
+
+                    13 === _currentEvent.keyCode ? element.triggerHandler('click') : void 0;
+
+                    if (_rawNewElement = document.querySelector('[ui-focus="' + (keymap[_currentEvent.keyCode] || keymap[keyNames[_currentEvent.keyCode]]) + '"]')) {
+                        _boundingClientRect = _rawNewElement.getBoundingClientRect();
+
+                        if (0 === _boundingClientRect.width && 0 === _boundingClientRect.height) {
+                            angular.element(_rawNewElement).triggerHandler('keydown');
+                        } else {
+                            _rawNewElement.focus();
+                        }
+                    } else if (13 === event.keyCode) {
+                        _boundingClientRect = element[0].getBoundingClientRect();
+
+                        if (0 === _boundingClientRect.width && 0 === _boundingClientRect.height) {
+                            document.querySelector('[ui-focus-init]').focus();
+                        }
                     }
-
-                    _boundingClientRect = scope.currentElement.getBoundingClientRect();
-
-                    element.css({
-                        width: _boundingClientRect.width + 'px',
-                        height: _boundingClientRect.height + 'px',
-                        top: _boundingClientRect.top + 'px',
-                        left: _boundingClientRect.left +'px'
-                    });
-                }
-            });
-        }
-    };
-});
+                });
+            }
+        };
+    });
+})();
