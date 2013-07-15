@@ -54,7 +54,7 @@
                     var _rawNewElement,
                         _boundingClientRect;
 
-                    event instanceof KeyboardEvent ? _currentEvent = event : void 0;
+                    _currentEvent || (_currentEvent = event);
 
                     13 === _currentEvent.keyCode ? element.triggerHandler('click') : void 0;
 
@@ -62,13 +62,15 @@
                         if (_isDisplayed(_rawNewElement)) {
                             _rawNewElement.focus();
                         } else {
-                            angular.element(_rawNewElement).triggerHandler('keydown');
+                            return angular.element(_rawNewElement).triggerHandler('keydown');
                         }
                     } else if (13 === event.keyCode) {
                         if (!_isDisplayed(element[0])) {
                             document.querySelector('[ui-focus-init]').focus();
                         }
                     }
+
+                    _currentEvent = null;
                 });
             }
         };
