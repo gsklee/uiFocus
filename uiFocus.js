@@ -30,7 +30,7 @@
             link: function(scope, element, attr) {
                 element.attr('tabindex', 0);
 
-                // defer execution to the next event loop
+                // Defer execution to the next event loop
                 $timeout(function() {
                     _isDisplayed(element[0]) ? element[0].focus() : void 0;
                 }, 0);
@@ -39,6 +39,7 @@
     }).
 
     directive('uiFocusKeymap', function(
+        $rootElement,
         keyNames
     ){
         var _currentEvent;
@@ -51,22 +52,41 @@
                 element.attr('tabindex', 0);
 
                 element.bind('keydown', function(event) {
-                    var _rawNewElement,
-                        _boundingClientRect;
+                    var _selectors,
+                        _rawNewElement,
+                        _displayedElements = [];
 
                     _currentEvent || (_currentEvent = event);
 
                     13 === _currentEvent.keyCode ? element.triggerHandler('click') : void 0;
 
-                    if (_rawNewElement = document.querySelector('[ui-focus="' + (keymap[_currentEvent.keyCode] || keymap[keyNames[_currentEvent.keyCode]]) + '"]')) {
-                        if (_isDisplayed(_rawNewElement)) {
-                            _rawNewElement.focus();
-                        } else {
-                            return angular.element(_rawNewElement).triggerHandler('keydown');
+                    _selectors = (keymap[_currentEvent.keyCode] || keymap[keyNames[_currentEvent.keyCode]] || '').split(/[\s]*\|\|[\s]*/);
+
+                    // Remove empty string from array
+                    if (_selectors.join('').split('').length) {
+
+                        // #1 Loop through all user-defined destinations
+                        while (_selectors.length) {
+                            if (_rawNewElement = $rootElement[0].querySelector('[ui-focus="' + _selectors.shift() + '"]')) {
+                                if (_isDisplayed(_rawNewElement)) {
+                                    _rawNewElement.focus();
+
+                                    break;
+                                } else {
+                                    _displayedElements.push(_rawNewElement);
+
+                                    _rawNewElement = null;
+                                }
+                            }
+                        }
+
+                        // #2 If a suitable destination cannot be decided in #1, attempt to deduce the most likely destination
+                        if (!_rawNewElement && _displayedElements.length) {
+                            return angular.element(_displayedElements[0]).triggerHandler('keydown');
                         }
                     } else if (13 === event.keyCode) {
                         if (!_isDisplayed(element[0])) {
-                            document.querySelector('[ui-focus-init]').focus();
+                            $rootElement[0].querySelector('[ui-focus-init]').focus();
                         }
                     }
 
